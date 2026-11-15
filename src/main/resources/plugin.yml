@@ -1,0 +1,5 @@
+name: EasyBotCE
+main: io.github.easybotce.bukkit.Easybot
+version: '${version}'
+api-version: '1.13'
+description: 连接 Minecraft 服务器与 EasyBotCE 群聊

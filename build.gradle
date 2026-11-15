@@ -1,0 +1,50 @@
+plugins {
+    id 'java'
+    id 'com.gradleup.shadow' version '8.3.9'
+}
+
+group = 'io.github.easybotce'
+version = '0.1.0'
+
+repositories {
+    mavenCentral()
+    maven {
+        url = 'https://hub.spigotmc.org/nexus/content/repositories/snapshots/'
+        content { includeGroup 'org.spigotmc' }
+    }
+}
+
+dependencies {
+    compileOnly('org.spigotmc:spigot-api:1.13.2-R0.1-SNAPSHOT') { transitive = false }
+    implementation 'com.google.code.gson:gson:2.13.2'
+    implementation 'org.java-websocket:Java-WebSocket:1.6.0'
+    runtimeOnly 'org.slf4j:slf4j-nop:2.0.16'
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8'
+    options.release = 8
+}
+
+processResources {
+    inputs.property 'version', version
+    filesMatching('plugin.yml') {
+        expand version: version
+    }
+}
+
+tasks.jar.enabled = false
+tasks.assemble.dependsOn(tasks.shadowJar)
+tasks.register('bridgeCheck', JavaExec) {
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass = 'io.github.easybotce.bukkit.BridgeCheck'
+}
+tasks.check.dependsOn(tasks.bridgeCheck)
+tasks.shadowJar {
+    archiveClassifier = ''
+    archiveBaseName = 'EasyBotCE-Bukkit'
+    mergeServiceFiles()
+    relocate 'com.google.gson', 'io.github.easybotce.bukkit.libs.gson'
+    relocate 'org.java_websocket', 'io.github.easybotce.bukkit.libs.websocket'
+    relocate 'org.slf4j', 'io.github.easybotce.bukkit.libs.slf4j'
+}
