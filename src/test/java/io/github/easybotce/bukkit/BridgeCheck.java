@@ -68,11 +68,13 @@ public final class BridgeCheck {
             client.start();
             WebSocket first = identified.poll(15, TimeUnit.SECONDS);
             require(first != null, "missing authentication or heartbeat");
+            require(client.isReady(), "authenticated bridge reports offline");
             client.sendPlayers("Alex");
-            client.sendChat("Alex", "c08f378c-1cb8-4084-8a93-2a135d4884f7", "Alex", "游戏消息");
+            client.sendChat("Alex", "c08f378c-1cb8-4084-8a93-2a135d4884f7", "Alex", "游戏消息", true);
             require("Alex".equals(players.get(5, TimeUnit.SECONDS)), "player list differs");
             JsonObject gameChat = chatFromGame.get(5, TimeUnit.SECONDS);
             require("游戏消息".equals(gameChat.get("message").getAsString()), "outbound chat differs");
+            require(gameChat.get("use_command").getAsBoolean(), "outbound command flag is missing");
             require("Alex".equals(gameChat.getAsJsonObject("player").get("player_name").getAsString()),
                     "outbound player differs");
             first.send("{\"op\":4,\"exec_op\":\"SEND_TO_CHAT\",\"text\":\"群消息\"}");

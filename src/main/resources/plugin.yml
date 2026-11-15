@@ -2,4 +2,18 @@ name: EasyBotCE
 main: io.github.easybotce.bukkit.Easybot
 version: '${version}'
 api-version: '1.13'
+folia-supported: true
 description: 连接 Minecraft 服务器与 EasyBotCE 群聊
+commands:
+  easybotce:
+    description: 查看桥接状态或重载插件配置
+    usage: '/<command> [status|reload]'
+    aliases: [ebce]
+  easybotcesay:
+    description: 通过同步规则发送消息
+    usage: '/<command> <消息>'
+    aliases: [ebcesay]
+permissions:
+  easybotce.reload:
+    description: 允许重载 EasyBotCE 插件配置
+    default: op

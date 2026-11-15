@@ -33,7 +33,7 @@ final class BridgeClient implements AutoCloseable {
     private final Logger logger;
     private final Runnable onReady;
     private final Consumer<String> onChat;
-    // All session state is accessed on this worker, including WebSocket callbacks.
+    // Session changes and WebSocket callbacks run on this worker.
     private final ScheduledExecutorService worker = Executors.newSingleThreadScheduledExecutor(task -> {
         Thread thread = new Thread(task, "EasyBotCE-Bridge");
         thread.setDaemon(true);
@@ -43,7 +43,7 @@ final class BridgeClient implements AutoCloseable {
     private Connection connection;
     private long deadline;
     private int heartbeatSeconds;
-    private boolean ready;
+    private volatile boolean ready;
 
     BridgeClient(URI address, String token, String pluginVersion, String serverDescription,
                  Logger logger, Runnable onReady, Consumer<String> onChat) {
@@ -85,7 +85,11 @@ final class BridgeClient implements AutoCloseable {
         }
     }
 
-    void sendChat(String name, String uuid, String displayName, String text) {
+    boolean isReady() {
+        return ready;
+    }
+
+    void sendChat(String name, String uuid, String displayName, String text, boolean command) {
         JsonObject player = new JsonObject();
         player.addProperty("player_name", name);
         player.addProperty("player_uuid", uuid);
@@ -93,7 +97,7 @@ final class BridgeClient implements AutoCloseable {
         JsonObject message = event("SYNC_MESSAGE");
         message.add("player", player);
         message.addProperty("message", text);
-        message.addProperty("use_command", false);
+        message.addProperty("use_command", command);
         submit(() -> {
             if (ready) {
                 send(message);
@@ -196,6 +200,7 @@ final class BridgeClient implements AutoCloseable {
     @Override
     public void close() {
         submit(() -> {
+            ready = false;
             if (connection != null) {
                 connection.closeConnection(CloseFrame.NORMAL, "");
                 connection = null;
